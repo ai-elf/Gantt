@@ -1,0 +1,893 @@
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Gantt Chart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Simple styles for active and inactive tabs */
+        .tab-button.active {
+            border-color: #4f46e5;
+            color: #4f46e5;
+            background-color: #eef2ff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-4 sm:p-6 md:p-8">
+    <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-4 sm:p-6 md:p-8">
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Project Timeline Planner</h1>
+        </div>
+
+        <!-- Configuration Section -->
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Configuration</h2>
+
+            <!-- Top Row: Upload/Date and Sprint Starts -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="csv-upload" class="block text-sm font-medium text-gray-700">Upload Epics (CSV)</label>
+                        <input type="file" id="csv-upload" accept=".csv" class="mt-1 block w-full text-base text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-base file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100"/>
+                    </div>
+                    <div>
+                        <label for="start-date" class="block text-sm font-medium text-gray-700">Start Date</label>
+                        <input type="date" id="start-date" value="2025-07-23" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                    </div>
+                </div>
+                <div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label for="start-sprint-des" class="block text-sm font-medium text-gray-700">Start Sprint (DES)</label>
+                            <input type="number" id="start-sprint-des" value="9" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                        </div>
+                        <div>
+                            <label for="start-sprint-be" class="block text-sm font-medium text-gray-700">Start Sprint (BE)</label>
+                            <input type="number" id="start-sprint-be" value="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                        </div>
+                        <div>
+                            <label for="start-sprint-fe" class="block text-sm font-medium text-gray-700">Start Sprint (FE)</label>
+                            <input type="number" id="start-sprint-fe" value="11" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mid Row: Capacities and WIP -->
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-6 mb-4 pt-4 border-t border-gray-200">
+                <div>
+                    <label for="des-capacity" class="block text-sm font-medium text-gray-700">DES Capacity SP/Sprint</label>
+                    <input type="number" id="des-capacity" value="16" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                </div>
+                <div>
+                    <label for="be-capacity" class="block text-sm font-medium text-gray-700">BE Capacity SP/Sprint</label>
+                    <input type="number" id="be-capacity" value="24" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                </div>
+                <div>
+                    <label for="fe-capacity" class="block text-sm font-medium text-gray-700">FE Capacity SP/Sprint</label>
+                    <input type="number" id="fe-capacity" value="32" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                </div>
+                <div>
+                    <label for="des-wip" class="block text-sm font-medium text-gray-700">DES WIP (Parallel Work)</label>
+                    <input type="number" id="des-wip" value="2" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                </div>
+                <div>
+                    <label for="be-wip" class="block text-sm font-medium text-gray-700">BE WIP (Parallel Work)</label>
+                    <input type="number" id="be-wip" value="3" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                </div>
+                <div>
+                    <label for="fe-wip" class="block text-sm font-medium text-gray-700">FE WIP (Parallel Work)</label>
+                    <input type="number" id="fe-wip" value="3" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                </div>
+            </div>
+            
+            <!-- Lower Row: Dependencies -->
+            <div class="flex items-center justify-between mb-6 pt-4 border-t border-gray-200">
+                <div class="flex items-center">
+                    <input id="be-dep-des-checkbox" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="be-dep-des-checkbox" class="ml-2 block text-sm font-medium text-gray-700">Back-end depends on Design completion</label>
+                </div>
+                <div class="flex items-center">
+                    <input id="fe-dep-des-checkbox" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" checked>
+                    <label for="fe-dep-des-checkbox" class="ml-2 block text-sm font-medium text-gray-700">Front-end depends on Design completion</label>
+                </div>
+                <div class="flex items-center">
+                    <input id="fe-dep-be-checkbox" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="fe-dep-be-checkbox" class="ml-2 block text-sm font-medium text-gray-700">Front-end depends on Back-end completion</label>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <button id="recalculate-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Recalculate Plan</button>
+                 <button id="download-chart-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">Download Chart (PNG)</button>
+            </div>
+        </div>
+
+        <!-- Tab Buttons -->
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                <button id="tab-btn-chart" class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Gantt Chart</button>
+                <button id="tab-btn-data" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">Data Input</button>
+                <button id="tab-btn-validation" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">Schedule Validation</button>
+                <button id="tab-btn-sprint-schedule" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">Schedule by Sprint</button>
+                <button id="tab-btn-detailed" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">Detailed Capacity</button>
+            </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="mt-6">
+            <!-- Tab 1: Chart & Configs -->
+            <div id="tab-content-chart" class="tab-content active">
+                <h2 class="text-xl font-bold text-gray-800 mb-2 text-center">Gantt Chart Visualization</h2>
+                <p id="chart-subtitle" class="text-sm text-gray-500 mb-6 text-center"></p>
+                <div id="chart-wrapper" class="overflow-x-auto">
+                    <div id="chart-container" class="relative" style="min-width: 800px;">
+                        <canvas id="ganttChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Data Input -->
+            <div id="tab-content-data" class="tab-content">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Raw Task Data</h2>
+                <div class="overflow-x-auto rounded-lg border">
+                    <table class="min-w-full divide-y divide-gray-200" id="data-input-table">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Title</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">FE</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">BE</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-input-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Rows will be injected by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 3: Schedule Validation -->
+            <div id="tab-content-validation" class="tab-content">
+                 <h2 class="text-xl font-bold text-gray-800 mb-4">Calculated Sprint Data</h2>
+                <div class="overflow-x-auto rounded-lg border">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Title</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DES Start</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DES End</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">BE Start</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">BE End</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">FE Start</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">FE End</th>
+                            </tr>
+                        </thead>
+                        <tbody id="validation-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Rows will be injected by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 4: Schedule by Sprint -->
+            <div id="tab-content-sprint-schedule" class="tab-content">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Schedule by Sprint</h2>
+                <div class="overflow-x-auto rounded-lg border">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sprint</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sprint Start Date</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">BE Team Capacity</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">FE Team Capacity</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DES Team Capacity</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">BE Capacity Spent</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">FE Capacity Spent</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DES Capacity Spent</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">BE Tasks</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FE Tasks</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DES Tasks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sprint-schedule-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Rows will be injected by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 5: Detailed Capacity Configurations -->
+            <div id="tab-content-detailed" class="tab-content">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Detailed Capacity Configuration</h2>
+                <div class="mb-4">
+                    <button id="return-to-basic-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-md shadow-sm">Return to Basic Configuration</button>
+                </div>
+                <div class="overflow-x-auto rounded-lg border">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sprint</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">BE Capacity</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">FE Capacity</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DES Capacity</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">BE WIP</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">FE WIP</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DES WIP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailed-config-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Rows will be injected by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Global State & Constants ---
+        const BE_COLOR = "#4987C7";
+        const FE_COLOR = "#ACC5DD";
+        const OV_COLOR = "#2E66A5";
+        const DES_COLOR = "#A259C4";
+        let chartInstance = null;
+        let currentTasks = [
+            { order: 101, title: "User Authentication", FE: 20, BE: 15, DES: 8 },
+            { order: 102, title: "Payment Integration", FE: 25, BE: 18, DES: 12 },
+            { order: 103, title: "Notification System", FE: 12, BE: 10, DES: 6 },
+            { order: 104, title: "Analytics Dashboard", FE: 30, BE: 22, DES: 15 },
+            { order: 105, "title": "Mobile App Support", FE: 18, BE: 14, DES: 9 }
+        ];
+
+        // --- Utility Functions ---
+        function parseTaskRow(row) {
+            const order = parseInt(row.Order || row.order, 10);
+            const fe = parseFloat(row.FE);
+            const be = parseFloat(row.BE);
+            if (isNaN(order) || isNaN(fe) || isNaN(be)) return null;
+            return {
+                order: order,
+                title: row.Title || row.title,
+                FE: fe,
+                BE: be,
+                DES: parseFloat(row.DES) || 0
+            };
+        }
+        function switchTab(tabId) {
+            const tabs = ['chart', 'data', 'validation', 'sprint-schedule', 'detailed'];
+            tabs.forEach(id => {
+                document.getElementById(`tab-btn-${id}`).classList.remove('active');
+                document.getElementById(`tab-content-${id}`).classList.remove('active');
+            });
+            document.getElementById(`tab-btn-${tabId}`).classList.add('active');
+            document.getElementById(`tab-content-${tabId}`).classList.add('active');
+        }
+        function updateTableBody(tableBody, rowsHtml) {
+            tableBody.innerHTML = '';
+            rowsHtml.forEach(tr => tableBody.appendChild(tr));
+        }
+
+        // --- Detailed Capacity Config State ---
+        let detailedConfigActive = false;
+        let detailedConfig = [];
+        const DEFAULT_SPRINTS = 6;
+
+        function prepopulateDetailedConfig() {
+            const beCap = parseInt(document.getElementById('be-capacity').value, 10);
+            const feCap = parseInt(document.getElementById('fe-capacity').value, 10);
+            const desCap = parseInt(document.getElementById('des-capacity').value, 10);
+            const beWip = parseInt(document.getElementById('be-wip').value, 10) || 3;
+            const feWip = parseInt(document.getElementById('fe-wip').value, 10) || 3;
+            const desWip = parseInt(document.getElementById('des-wip').value, 10) || 2;
+            const startSprintBE = parseInt(document.getElementById('start-sprint-be').value, 10);
+            const startSprintFE = parseInt(document.getElementById('start-sprint-fe').value, 10);
+            const startSprintDES = parseInt(document.getElementById('start-sprint-des').value, 10);
+            detailedConfig = [];
+            const firstSprint = Math.min(startSprintBE, startSprintFE, startSprintDES);
+            for (let i = 0; i < DEFAULT_SPRINTS; i++) {
+                const sprintNum = firstSprint + i;
+                detailedConfig.push({
+                    sprint: sprintNum,
+                    beCapacity: sprintNum < startSprintBE ? 0 : beCap,
+                    feCapacity: sprintNum < startSprintFE ? 0 : feCap,
+                    desCapacity: sprintNum < startSprintDES ? 0 : desCap,
+                    beWip: sprintNum < startSprintBE ? 0 : beWip,
+                    feWip: sprintNum < startSprintFE ? 0 : feWip,
+                    desWip: sprintNum < startSprintDES ? 0 : desWip,
+                });
+            }
+        }
+
+        function renderDetailedConfigTable() {
+            const tableBody = document.getElementById('detailed-config-table-body');
+            const startSprintBE = parseInt(document.getElementById('start-sprint-be').value, 10);
+            const startSprintFE = parseInt(document.getElementById('start-sprint-fe').value, 10);
+            const rowsHtml = detailedConfig.map((row, idx) => {
+                const beDisabled = row.sprint < startSprintBE;
+                const feDisabled = row.sprint < startSprintFE;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${row.sprint}</td>
+                    <td class="px-4 py-2 text-center text-sm ${beDisabled ? 'bg-gray-200 text-gray-400' : 'text-gray-500'}" ${beDisabled ? '' : 'contenteditable="true"'} data-field="beCapacity" data-row="${idx}">${row.beCapacity}</td>
+                    <td class="px-4 py-2 text-center text-sm ${feDisabled ? 'bg-gray-200 text-gray-400' : 'text-gray-500'}" ${feDisabled ? '' : 'contenteditable="true"'} data-field="feCapacity" data-row="${idx}">${row.feCapacity}</td>
+                    <td class="px-4 py-2 text-center text-sm" contenteditable="true" data-field="desCapacity" data-row="${idx}">${row.desCapacity}</td>
+                    <td class="px-4 py-2 text-center text-sm ${beDisabled ? 'bg-gray-200 text-gray-400' : 'text-gray-500'}" ${beDisabled ? '' : 'contenteditable="true"'} data-field="beWip" data-row="${idx}">${row.beWip}</td>
+                    <td class="px-4 py-2 text-center text-sm ${feDisabled ? 'bg-gray-200 text-gray-400' : 'text-gray-500'}" ${feDisabled ? '' : 'contenteditable="true"'} data-field="feWip" data-row="${idx}">${row.feWip}</td>
+                    <td class="px-4 py-2 text-center text-sm" contenteditable="true" data-field="desWip" data-row="${idx}">${row.desWip}</td>
+                `;
+                return tr;
+            });
+            updateTableBody(tableBody, rowsHtml);
+            tableBody.querySelectorAll('[contenteditable=true]').forEach(cell => {
+                cell.addEventListener('blur', function(e) {
+                    const rowIdx = parseInt(this.getAttribute('data-row'), 10);
+                    const field = this.getAttribute('data-field');
+                    let value = this.textContent.trim();
+                    value = value === '' ? '' : Number(value);
+                    if (isNaN(value)) {
+                        this.textContent = detailedConfig[rowIdx][field] ?? '';
+                        return;
+                    }
+                    detailedConfig[rowIdx][field] = value;
+                });
+                cell.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.blur();
+                    }
+                });
+            });
+        }
+
+        function setBasicConfigDisabled(disabled) {
+            ['start-date', 'start-sprint-be', 'start-sprint-fe', 'start-sprint-des', 'be-capacity', 'fe-capacity', 'des-capacity', 'be-wip', 'fe-wip', 'des-wip'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input) input.disabled = disabled;
+            });
+        }
+
+        // --- SCHEDULING LOGIC V2: Hard Cap, WIP, Leftover Handling ---
+        function scheduleV2(df_in, col, start, cap_fn, wip_fn, ready_fn = () => true, limit = 300) {
+            const df = JSON.parse(JSON.stringify(df_in));
+            const upperCol = col.toUpperCase();
+            df.forEach(task => {
+                task[`${col}_start`] = null;
+                task[`${col}_end`] = null;
+                task[`${col}_rem`] = task[upperCol];
+                task[`${col}_sprint_allocation`] = {};
+            });
+            let backlog = df.map((_, i) => i);
+            let active = [];
+            let cur = start;
+            while ((backlog.length > 0 || active.length > 0) && cur < start + limit) {
+                while (active.length < wip_fn(cur) && backlog.length > 0) {
+                    let pulled = false;
+                    for (let i = 0; i < backlog.length; i++) {
+                        const idx = backlog[i];
+                        if (df[idx][upperCol] === 0) { backlog.splice(i, 1); pulled = true; break; }
+                        if (ready_fn(idx, cur)) {
+                            df[idx][`${col}_start`] = cur;
+                            active.push(idx);
+                            backlog.splice(i, 1);
+                            pulled = true;
+                            break;
+                        }
+                    }
+                    if (!pulled) break;
+                }
+                let cap = cap_fn(cur);
+                let done = [];
+                let share = active.length > 0 ? cap / active.length : 0;
+                for (let i = 0; i < active.length && cap > 0; i++) {
+                    const idx = active[i];
+                    const take = Math.min(df[idx][`${col}_rem`], share);
+                    df[idx][`${col}_rem`] -= take;
+                    cap -= take;
+                    if (!df[idx][`${col}_sprint_allocation`][cur]) df[idx][`${col}_sprint_allocation`][cur] = 0;
+                    df[idx][`${col}_sprint_allocation`][cur] += take;
+                    if (df[idx][`${col}_rem`] <= 1e-3) {
+                        df[idx][`${col}_end`] = cur + 1;
+                        done.push(idx);
+                    }
+                }
+                active = active.filter(i => !done.includes(i));
+                cur++;
+            }
+            return df;
+        }
+        function runPlannerV2(tasksData) {
+            const START_BE = parseInt(document.getElementById('start-sprint-be').value, 10);
+            const START_FE = parseInt(document.getElementById('start-sprint-fe').value, 10);
+            const START_DES = parseInt(document.getElementById('start-sprint-des').value, 10);
+            const BASE_DATE = new Date(document.getElementById('start-date').value + 'T00:00:00Z');
+            const BE_CAP_INPUT = parseInt(document.getElementById('be-capacity').value, 10);
+            const FE_CAP_INPUT = parseInt(document.getElementById('fe-capacity').value, 10);
+            const DES_CAP_INPUT = parseInt(document.getElementById('des-capacity').value, 10);
+            const BE_WIP_INPUT = parseInt(document.getElementById('be-wip').value, 10) || 3;
+            const FE_WIP_INPUT = parseInt(document.getElementById('fe-wip').value, 10) || 3;
+            const DES_WIP_INPUT = parseInt(document.getElementById('des-wip').value, 10) || 2;
+            const sprintDate = (s) => dateFns.addDays(BASE_DATE, 14 * (s - START_BE));
+
+            // Dynamically find the New Year holiday sprint
+            let newYearSprint = null;
+            const maxSprintLookahead = 100; // Look ahead ~4 years worth of sprints
+            const firstSprint = Math.min(START_DES, START_BE, START_FE);
+            for (let s = firstSprint; s < firstSprint + maxSprintLookahead; s++) {
+                const sprintStart = sprintDate(s);
+                const sprintEnd = dateFns.addDays(sprintStart, 13);
+                const holidayInterval = {
+                    start: new Date(sprintStart.getFullYear(), 11, 25), // Dec 25
+                    end: new Date(sprintStart.getFullYear() + 1, 0, 1)   // Jan 1
+                };
+
+                if (dateFns.areIntervalsOverlapping({ start: sprintStart, end: sprintEnd }, holidayInterval)) {
+                    newYearSprint = s;
+                    break;
+                }
+            }
+
+            // Update subtitle with holiday info
+            const subtitleEl = document.getElementById('chart-subtitle');
+            if (newYearSprint !== null) {
+                subtitleEl.textContent = `Sprint ${newYearSprint} is the New Year holiday sprint with zero capacity.`;
+            } else {
+                subtitleEl.textContent = 'Plan calculated without a New Year holiday sprint in view.';
+            }
+
+            let be_cap, fe_cap, des_cap, be_wip, fe_wip, des_wip;
+            if (detailedConfigActive && detailedConfig.length > 0) {
+                const configMap = {};
+                detailedConfig.forEach(row => { configMap[row.sprint] = row; });
+                be_cap = (s) => (s === newYearSprint ? 0 : (configMap[s] ? configMap[s].beCapacity : BE_CAP_INPUT));
+                fe_cap = (s) => (s === newYearSprint ? 0 : (configMap[s] ? configMap[s].feCapacity : FE_CAP_INPUT));
+                des_cap = (s) => (s === newYearSprint ? 0 : (configMap[s] ? configMap[s].desCapacity : DES_CAP_INPUT));
+                be_wip = (s) => (configMap[s] ? configMap[s].beWip : 3);
+                fe_wip = (s) => (configMap[s] ? configMap[s].feWip : 3);
+                des_wip = (s) => (configMap[s] ? configMap[s].desWip : 2);
+            } else {
+                be_cap = (s) => (s === newYearSprint ? 0 : BE_CAP_INPUT);
+                fe_cap = (s) => (s === newYearSprint ? 0 : FE_CAP_INPUT);
+                des_cap = (s) => (s === newYearSprint ? 0 : DES_CAP_INPUT);
+                be_wip = () => BE_WIP_INPUT;
+                fe_wip = () => FE_WIP_INPUT;
+                des_wip = () => DES_WIP_INPUT;
+            }
+            const sortedTasks = tasksData.slice().sort((a, b) => a.order - b.order);
+            
+            const df_des = scheduleV2(sortedTasks, "des", START_DES, des_cap, des_wip);
+
+            const beDependsOnDes = document.getElementById('be-dep-des-checkbox').checked;
+            const be_ready = (idx, cur) => {
+                if (df_des[idx].BE === 0) return false;
+                if (!beDependsOnDes) return true;
+
+                const desEnd = df_des[idx].des_end;
+                return (df_des[idx].DES === 0) || (desEnd !== null && desEnd <= cur);
+            };
+
+            const df_be = scheduleV2(df_des, "be", START_BE, be_cap, be_wip, be_ready);
+
+            const feDependsOnDes = document.getElementById('fe-dep-des-checkbox').checked;
+            const feDependsOnBe = document.getElementById('fe-dep-be-checkbox').checked;
+            const fe_ready = (idx, cur) => {
+                if (df_be[idx].FE === 0) return false;
+                
+                let be_ready_for_fe;
+                if (feDependsOnBe) {
+                    const beEnd = df_be[idx].be_end;
+                    be_ready_for_fe = (df_be[idx].BE === 0) || (beEnd !== null && beEnd <= cur);
+                } else {
+                    const beStart = df_be[idx].be_start;
+                    be_ready_for_fe = (df_be[idx].BE === 0) || (beStart !== null && beStart <= cur);
+                }
+
+                if (!feDependsOnDes) {
+                    return be_ready_for_fe;
+                }
+
+                const desEnd = df_be[idx].des_end;
+                const des_done = (df_be[idx].DES === 0) || (desEnd !== null && desEnd <= cur);
+                
+                return be_ready_for_fe && des_done;
+            };
+
+            const df_full = scheduleV2(df_be, "fe", START_FE, fe_cap, fe_wip, fe_ready);
+            
+            populateValidationTable(df_full);
+            populateDataInputTable(currentTasks);
+            populateSprintScheduleTable(df_full, sprintDate, be_cap, fe_cap, des_cap, START_BE);
+            
+            // --- Gantt Data Preparation ---
+            const yLabels = df_full.map(t => t.title);
+            let ganttData = [];
+            let desGanttData = [];
+
+            df_full.forEach((row, i) => {
+                // DES data
+                if (row.des_start !== null && row.des_end !== null) {
+                    desGanttData.push({
+                        x: [row.des_start, row.des_end],
+                        y: row.title
+                    });
+                }
+
+                const be_alloc = row.be_sprint_allocation || {};
+                const fe_alloc = row.fe_sprint_allocation || {};
+                const allSprints = new Set([...Object.keys(be_alloc).map(Number), ...Object.keys(fe_alloc).map(Number)]);
+                
+                allSprints.forEach(sprint => {
+                    const hasBE = be_alloc[sprint] > 0;
+                    const hasFE = fe_alloc[sprint] > 0;
+                    let color = hasBE && hasFE ? OV_COLOR : (hasBE ? BE_COLOR : FE_COLOR);
+                    let type = hasBE && hasFE ? 'BE+FE' : (hasBE ? 'Back-end' : 'Front-end');
+                    ganttData.push({
+                        x: [sprint, sprint + 1],
+                        y: row.title,
+                        color: color,
+                        type: type,
+                        sprintStart: sprint,
+                        sprintEnd: sprint + 1
+                    });
+                });
+            });
+            
+            renderChart(yLabels, ganttData, desGanttData, sprintDate, START_BE);
+        }
+
+        function populateValidationTable(data) {
+            const tableBody = document.getElementById('validation-table-body');
+            updateTableBody(tableBody, data.map(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${row.order}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${row.title}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500">${row.des_start !== null ? row.des_start.toFixed(1) : '-'}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500">${row.des_end !== null ? row.des_end.toFixed(1) : '-'}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500">${row.be_start !== null ? row.be_start.toFixed(1) : '-'}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500">${row.be_end !== null ? row.be_end.toFixed(1) : '-'}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500">${row.fe_start !== null ? row.fe_start.toFixed(1) : '-'}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500">${row.fe_end !== null ? row.fe_end.toFixed(1) : '-'}</td>
+                `;
+                return tr;
+            }));
+        }
+
+        function populateDataInputTable(data) {
+            const tableBody = document.getElementById('data-input-table-body');
+            if (!tableBody) return;
+            updateTableBody(tableBody, data.map((row, rowIndex) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700" contenteditable="true" data-field="order" data-row="${rowIndex}">${row.order ?? ''}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700" contenteditable="true" data-field="title" data-row="${rowIndex}">${row.title ?? ''}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500" contenteditable="true" data-field="FE" data-row="${rowIndex}">${row.FE ?? ''}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500" contenteditable="true" data-field="BE" data-row="${rowIndex}">${row.BE ?? ''}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500" contenteditable="true" data-field="DES" data-row="${rowIndex}">${row.DES ?? ''}</td>
+                `;
+                return tr;
+            }));
+            tableBody.querySelectorAll('[contenteditable=true]').forEach(cell => {
+                cell.addEventListener('blur', function(e) {
+                    const rowIdx = parseInt(this.getAttribute('data-row'), 10);
+                    const field = this.getAttribute('data-field');
+                    let value = this.textContent.trim();
+                    if (field === 'order' || field === 'FE' || field === 'BE' || field === 'DES') {
+                        value = value === '' ? '' : Number(value);
+                        if (isNaN(value)) {
+                            this.textContent = currentTasks[rowIdx][field] ?? '';
+                            return;
+                        }
+                    }
+                    currentTasks[rowIdx][field] = value;
+                });
+                cell.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.blur();
+                    }
+                });
+            });
+        }
+
+        function populateSprintScheduleTable(data, sprintDate, be_cap, fe_cap, des_cap, START_BE) {
+            const sprints = new Set();
+            data.forEach(row => {
+                Object.keys(row.be_sprint_allocation || {}).forEach(s => sprints.add(Number(s)));
+                Object.keys(row.fe_sprint_allocation || {}).forEach(s => sprints.add(Number(s)));
+                Object.keys(row.des_sprint_allocation || {}).forEach(s => sprints.add(Number(s)));
+            });
+            const sprintList = Array.from(sprints).sort((a, b) => a - b);
+            const tableBody = document.getElementById('sprint-schedule-table-body');
+            
+            updateTableBody(tableBody, sprintList.map(sprint => {
+                const beTeamCap = be_cap(sprint);
+                const feTeamCap = fe_cap(sprint);
+                const desTeamCap = des_cap(sprint);
+                let beSpent = 0, feSpent = 0, desSpent = 0;
+                const beTasksInSprint = [], feTasksInSprint = [], desTasksInSprint = [];
+
+                data.forEach(row => {
+                    if (row.be_sprint_allocation && row.be_sprint_allocation[sprint]) {
+                        beSpent += row.be_sprint_allocation[sprint];
+                        beTasksInSprint.push(`${row.title} (${row.be_sprint_allocation[sprint].toFixed(1)})`);
+                    }
+                    if (row.fe_sprint_allocation && row.fe_sprint_allocation[sprint]) {
+                        feSpent += row.fe_sprint_allocation[sprint];
+                        feTasksInSprint.push(`${row.title} (${row.fe_sprint_allocation[sprint].toFixed(1)})`);
+                    }
+                    if (row.des_sprint_allocation && row.des_sprint_allocation[sprint]) {
+                        desSpent += row.des_sprint_allocation[sprint];
+                        desTasksInSprint.push(`${row.title} (${row.des_sprint_allocation[sprint].toFixed(1)})`);
+                    }
+                });
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${sprint}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${dateFns.format(sprintDate(sprint), 'yyyy-MM-dd')}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500">${beTeamCap}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500">${feTeamCap}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500">${desTeamCap}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500">${beSpent.toFixed(1)}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500">${feSpent.toFixed(1)}</td>
+                    <td class="px-4 py-2 text-center text-sm text-gray-500">${desSpent.toFixed(1)}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${beTasksInSprint.join(', ')}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${feTasksInSprint.join(', ')}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${desTasksInSprint.join(', ')}</td>
+                `;
+                return tr;
+            }));
+        }
+
+        function renderChart(yLabels, ganttData, desGanttData, sprintDate, START_BE) {
+            const ctx = document.getElementById('ganttChart').getContext('2d');
+            const container = document.getElementById('chart-container');
+            container.style.height = `${yLabels.length * 42 + 100}px`;
+            if (chartInstance) chartInstance.destroy();
+
+            let allSprints = new Set();
+            ganttData.forEach(d => { allSprints.add(d.sprintStart); allSprints.add(d.sprintEnd); });
+            desGanttData.forEach(d => { allSprints.add(d.x[0]); allSprints.add(d.x[1]); });
+
+            const sprintList = Array.from(allSprints).sort((a, b) => a - b);
+            const sprintLabels = sprintList.map(s => dateFns.format(sprintDate(s), 'd MMM'));
+            const sprintMap = {};
+            sprintList.forEach((s, i) => { sprintMap[s] = i; });
+
+            const mainBarData = ganttData.map(d => ({
+                x: [sprintMap[d.sprintStart], sprintMap[d.sprintEnd]],
+                y: d.y, color: d.color, type: d.type,
+                sprintStart: d.sprintStart, sprintEnd: d.sprintEnd
+            }));
+            
+            const desBarData = desGanttData.map(d => ({
+                 x: [sprintMap[d.x[0]], sprintMap[d.x[1]]],
+                 y: d.y, type: 'Design',
+                 sprintStart: d.x[0], sprintEnd: d.x[1]
+            }));
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: yLabels,
+                    datasets: [
+                        {
+                            label: 'BE/FE Work',
+                            data: mainBarData,
+                            backgroundColor: (context) => context.raw.color,
+                            barThickness: 25,
+                            order: 1
+                        },
+                        {
+                            label: 'Design Work',
+                            data: desBarData,
+                            backgroundColor: DES_COLOR,
+                            barThickness: 5,
+                            barPercentage: 1,
+                            categoryPercentage: 0.7,
+                            order: 0,
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear', min: 0, max: sprintList.length -1,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) { return sprintLabels[value] || ''; },
+                                font: { size: 10 }, maxRotation: 45, minRotation: 45
+                            },
+                            title: { display: true, text: 'Sprint start (two-week cadence)', font: { size: 14, weight: 'bold' } }
+                        },
+                        y: {
+                            type: 'category', grid: { display: false },
+                            ticks: { font: { size: 12 } },
+                            stacked: false
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                generateLabels: () => [
+                                    { text: 'Back-end', fillStyle: BE_COLOR },
+                                    { text: 'Front-end', fillStyle: FE_COLOR },
+                                    { text: 'Design', fillStyle: DES_COLOR }
+                                ]
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: (context) => yLabels[Math.round(context[0].parsed.y)] || '',
+                                label: (context) => {
+                                    if (!context.raw) return null;
+                                    const { type, sprintStart, sprintEnd } = context.raw;
+                                    const startDate = dateFns.format(sprintDate(sprintStart), 'MMM d');
+                                    const endDate = dateFns.format(sprintDate(endSprint), 'MMM d');
+                                    return `${type}: ${startDate} - ${endDate}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Event Listeners ---
+        function setupEventListeners() {
+            // Tab Switching
+            ['chart', 'data', 'validation', 'sprint-schedule'].forEach(tabId => {
+                document.getElementById(`tab-btn-${tabId}`).addEventListener('click', () => switchTab(tabId));
+            });
+            document.getElementById('tab-btn-detailed').addEventListener('click', () => {
+                detailedConfigActive = true;
+                setBasicConfigDisabled(true);
+                switchTab('detailed');
+                if (detailedConfig.length === 0) prepopulateDetailedConfig();
+                renderDetailedConfigTable();
+            });
+            document.getElementById('return-to-basic-btn').addEventListener('click', () => {
+                detailedConfigActive = false;
+                setBasicConfigDisabled(false);
+                switchTab('chart');
+                prepopulateDetailedConfig();
+            });
+            document.getElementById('recalculate-btn').addEventListener('click', () => {
+                runPlannerV2(currentTasks);
+                switchTab('chart');
+            });
+            document.getElementById('download-chart-btn').addEventListener('click', () => {
+                if (chartInstance) {
+                    const canvas = chartInstance.canvas;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Save the current state
+                    const originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+                    // Draw a white background
+                    ctx.save();
+                    ctx.globalCompositeOperation = 'destination-over';
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Trigger the download
+                    const link = document.createElement('a');
+                    link.href = canvas.toDataURL('image/png');
+                    link.download = 'gantt-chart.png';
+                    link.click();
+                    
+                    // Restore the original canvas state after a short delay
+                    ctx.restore();
+                    setTimeout(() => {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.putImageData(originalImageData, 0, 0);
+                    }, 100);
+
+                } else {
+                    alert("Please generate a chart first by clicking 'Recalculate Plan'.");
+                }
+            });
+            document.getElementById('csv-upload').addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        try {
+                            const parsedTasks = results.data.map(parseTaskRow).filter(task => task !== null);
+                            if (parsedTasks.length === 0) {
+                                alert("No valid tasks found in the CSV. Please check the format.");
+                                return;
+                            }
+                            currentTasks = parsedTasks;
+                            populateDataInputTable(currentTasks);
+                            updateDesInputsState();
+                            switchTab('data');
+                            alert('CSV file loaded successfully! Click "Recalculate Plan" to update the chart.');
+                        } catch (error) {
+                            console.error("Error processing CSV file:", error);
+                            alert(`Error parsing CSV file: ${error.message}`);
+                        }
+                    },
+                    error: (error) => {
+                        console.error("PapaParse error:", error);
+                        alert(`Error parsing CSV file: ${error.message}`);
+                    }
+                });
+            });
+            ['fe-dep-des-checkbox', 'fe-dep-be-checkbox', 'be-dep-des-checkbox'].forEach(id => {
+                document.getElementById(id).addEventListener('change', () => {
+                    runPlannerV2(currentTasks);
+                });
+            });
+            ['start-sprint-be', 'start-sprint-fe', 'start-sprint-des', 'start-date', 'be-capacity', 'fe-capacity', 'des-capacity', 'be-wip', 'fe-wip', 'des-wip'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            runPlannerV2(currentTasks);
+                            switchTab('chart');
+                        }
+                    });
+                }
+            });
+        }
+
+        function updateDesInputsState() {
+            const hasDesWork = currentTasks.some(task => task.DES && task.DES > 0);
+            ['des-capacity', 'des-wip', 'start-sprint-des'].forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    const parent = input.closest('.col-span-1');
+                    input.disabled = !hasDesWork;
+                    if (parent) {
+                        if (!hasDesWork) {
+                            parent.classList.add('opacity-50', 'pointer-events-none');
+                        } else {
+                            parent.classList.remove('opacity-50', 'pointer-events-none');
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Initial Load ---
+        window.onload = () => {
+            prepopulateDetailedConfig();
+            setupEventListeners();
+            populateDataInputTable(currentTasks);
+            updateDesInputsState();
+            runPlannerV2(currentTasks);
+        };
+
+    </script>
+</body>
+</html>
+ 
