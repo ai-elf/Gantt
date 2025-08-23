@@ -49,22 +49,22 @@
                     </div>
                     <div>
                         <label for="start-date" class="block text-sm font-medium text-gray-700">Start Date</label>
-                        <input type="date" id="start-date" value="2025-07-23" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                        <input type="date" id="start-date" value="2024-07-30" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
                     </div>
                 </div>
                 <div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label for="start-sprint-des" class="block text-sm font-medium text-gray-700">Start Sprint (DES)</label>
-                            <input type="number" id="start-sprint-des" value="9" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                            <input type="number" id="start-sprint-des" value="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
                         </div>
                         <div>
                             <label for="start-sprint-be" class="block text-sm font-medium text-gray-700">Start Sprint (BE)</label>
-                            <input type="number" id="start-sprint-be" value="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                            <input type="number" id="start-sprint-be" value="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
                         </div>
                         <div>
                             <label for="start-sprint-fe" class="block text-sm font-medium text-gray-700">Start Sprint (FE)</label>
-                            <input type="number" id="start-sprint-fe" value="11" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                            <input type="number" id="start-sprint-fe" value="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
                         </div>
                     </div>
                 </div>
@@ -74,7 +74,7 @@
             <div class="grid grid-cols-1 md:grid-cols-6 gap-6 mb-4 pt-4 border-t border-gray-200">
                 <div>
                     <label for="des-capacity" class="block text-sm font-medium text-gray-700">DES Capacity SP/Sprint</label>
-                    <input type="number" id="des-capacity" value="16" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                    <input type="number" id="des-capacity" value="8" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
                 </div>
                 <div>
                     <label for="be-capacity" class="block text-sm font-medium text-gray-700">BE Capacity SP/Sprint</label>
@@ -82,7 +82,7 @@
                 </div>
                 <div>
                     <label for="fe-capacity" class="block text-sm font-medium text-gray-700">FE Capacity SP/Sprint</label>
-                    <input type="number" id="fe-capacity" value="32" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
+                    <input type="number" id="fe-capacity" value="24" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-base text-base">
                 </div>
                 <div>
                     <label for="des-wip" class="block text-sm font-medium text-gray-700">DES WIP (Parallel Work)</label>
@@ -115,8 +115,9 @@
             </div>
 
             <!-- Buttons -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                  <button id="recalculate-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Recalculate Plan</button>
+                 <button id="download-data-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Download Data (CSV)</button>
                  <button id="download-chart-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">Download Chart (PNG)</button>
             </div>
         </div>
@@ -253,11 +254,18 @@
         const DES_COLOR = "#A259C4";
         let chartInstance = null;
         let currentTasks = [
-            { order: 101, title: "User Authentication", FE: 20, BE: 15, DES: 8 },
-            { order: 102, title: "Payment Integration", FE: 25, BE: 18, DES: 12 },
-            { order: 103, title: "Notification System", FE: 12, BE: 10, DES: 6 },
-            { order: 104, title: "Analytics Dashboard", FE: 30, BE: 22, DES: 15 },
-            { order: 105, "title": "Mobile App Support", FE: 18, BE: 14, DES: 9 }
+            { order: 201, title: "Landing Page", FE: 10, BE: 0, DES: 15 },
+            { order: 202, title: "User Profile", FE: 12, BE: 8, DES: 10 },
+            { order: 203, title: "Checkout Flow", FE: 18, BE: 15, DES: 12 },
+            { order: 204, title: "Design System", FE: 0, BE: 0, DES: 20 },
+            { order: 205, title: "Notifications", FE: 8, BE: 10, DES: 0 },
+            { order: 206, title: "Analytics Dashboard", FE: 15, BE: 18, DES: 10 },
+            { order: 207, title: "Admin Panel", FE: 20, BE: 25, DES: 8 },
+            { order: 208, title: "Search Functionality", FE: 10, BE: 12, DES: 5 },
+            { order: 209, title: "API Integration", FE: 5, BE: 20, DES: 0 },
+            { order: 210, title: "User Onboarding", FE: 15, BE: 5, DES: 10 },
+            { order: 211, title: "Payment Gateway", FE: 12, BE: 18, DES: 6 },
+            { order: 212, title: "Email Service", FE: 6, BE: 10, DES: 3 }
         ];
 
         // --- Utility Functions ---
@@ -382,19 +390,28 @@
             let cur = start;
             while ((backlog.length > 0 || active.length > 0) && cur < start + limit) {
                 while (active.length < wip_fn(cur) && backlog.length > 0) {
-                    let pulled = false;
+                    let pulled_a_task = false;
                     for (let i = 0; i < backlog.length; i++) {
                         const idx = backlog[i];
-                        if (df[idx][upperCol] === 0) { backlog.splice(i, 1); pulled = true; break; }
                         if (ready_fn(idx, cur)) {
-                            df[idx][`${col}_start`] = cur;
-                            active.push(idx);
-                            backlog.splice(i, 1);
-                            pulled = true;
-                            break;
+                            if (df[idx][upperCol] === 0) {
+                                df[idx][`${col}_start`] = cur;
+                                df[idx][`${col}_end`] = cur;
+                                backlog.splice(i, 1);
+                                i--; // we modified backlog, so adjust index
+                            } else {
+                                df[idx][`${col}_start`] = cur;
+                                active.push(idx);
+                                backlog.splice(i, 1);
+                                pulled_a_task = true;
+                                break; // Exit for loop to re-evaluate while condition
+                            }
                         }
                     }
-                    if (!pulled) break;
+                    // If we iterated through the whole backlog and couldn't pull any new *active* tasks, break.
+                    if (!pulled_a_task) {
+                        break;
+                    }
                 }
                 let cap = cap_fn(cur);
                 let done = [];
@@ -479,7 +496,6 @@
 
             const beDependsOnDes = document.getElementById('be-dep-des-checkbox').checked;
             const be_ready = (idx, cur) => {
-                if (df_des[idx].BE === 0) return false;
                 if (!beDependsOnDes) return true;
 
                 const desEnd = df_des[idx].des_end;
@@ -491,15 +507,12 @@
             const feDependsOnDes = document.getElementById('fe-dep-des-checkbox').checked;
             const feDependsOnBe = document.getElementById('fe-dep-be-checkbox').checked;
             const fe_ready = (idx, cur) => {
-                if (df_be[idx].FE === 0) return false;
-                
                 let be_ready_for_fe;
                 if (feDependsOnBe) {
                     const beEnd = df_be[idx].be_end;
                     be_ready_for_fe = (df_be[idx].BE === 0) || (beEnd !== null && beEnd <= cur);
                 } else {
-                    const beStart = df_be[idx].be_start;
-                    be_ready_for_fe = (df_be[idx].BE === 0) || (beStart !== null && beStart <= cur);
+                    be_ready_for_fe = true;
                 }
 
                 if (!feDependsOnDes) {
@@ -748,7 +761,7 @@
                                     if (!context.raw) return null;
                                     const { type, sprintStart, sprintEnd } = context.raw;
                                     const startDate = dateFns.format(sprintDate(sprintStart), 'MMM d');
-                                    const endDate = dateFns.format(sprintDate(endSprint), 'MMM d');
+                                    const endDate = dateFns.format(sprintDate(sprintEnd), 'MMM d');
                                     return `${type}: ${startDate} - ${endDate}`;
                                 }
                             }
@@ -780,6 +793,34 @@
             document.getElementById('recalculate-btn').addEventListener('click', () => {
                 runPlannerV2(currentTasks);
                 switchTab('chart');
+            });
+            document.getElementById('download-data-btn').addEventListener('click', () => {
+                if (!currentTasks || currentTasks.length === 0) {
+                    alert("No data available to download.");
+                    return;
+                }
+                const tasksToExport = currentTasks.map(task => ({
+                    Order: task.order ?? '',
+                    Title: task.title ?? '',
+                    FE: task.FE ?? 0,
+                    BE: task.BE ?? 0,
+                    DES: task.DES ?? 0,
+                }));
+
+                const csv = Papa.unparse(tasksToExport, {
+                    columns: ["Order", "Title", "FE", "BE", "DES"],
+                    header: true,
+                });
+
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'updated_estimations.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             });
             document.getElementById('download-chart-btn').addEventListener('click', () => {
                 if (chartInstance) {
@@ -890,4 +931,5 @@
     </script>
 </body>
 </html>
+ 
  
