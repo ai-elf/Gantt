@@ -2,7 +2,7 @@
 
 A modern, interactive web-based Gantt chart and sprint planner designed for agile project teams. Easily visualize, configure, and export your project schedule with comprehensive support for Design, Back-end, and Front-end work streams, custom team capacities, WIP limits, configurable dependencies, and CSV import.
 
-🌐 **[Try it live on GitHub Pages](https://ai-elf.github.io/Gantt/)** | 📊 **[Direct link to Planner](https://ai-elf.github.io/Gantt/)**
+🌐 **[Try it live on GitHub Pages](https://ai-elf.github.io/Gantt/Gantt_Planner.html)**
 
 ## Features
 - **Interactive Gantt Chart**: Visualize project tasks by sprint with color-coded bars. Design work is shown as a thin track, overlaid on the main bar representing Back-end and Front-end work.
@@ -20,11 +20,11 @@ A modern, interactive web-based Gantt chart and sprint planner designed for agil
 ## Setup & Usage
 
 ### Quick Start
-🌐 **[Use the live version](https://ai-elf.github.io/Gantt/)** - No installation required!
+🌐 **[Use the live version](https://ai-elf.github.io/Gantt/Gantt_Planner.html)** - No installation required!
 
 ### Local Setup
 1. **Clone or Download** this repository.
-2. **Open `index.html` in your browser** (no build or server required).
+2. **Open `Gantt_Planner.html` in your browser** (no build or server required).
 
 ### Sample Data
 Ready to test? Try these sample CSV files:
