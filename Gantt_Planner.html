@@ -467,7 +467,7 @@
             // Update subtitle with holiday info
             const subtitleEl = document.getElementById('chart-subtitle');
             if (newYearSprint !== null) {
-                subtitleEl.textContent = `Sprint ${newYearSprint} is the New Year holiday sprint with zero capacity.`;
+                subtitleEl.textContent = `Sprint ${newYearSprint} is the New Year holiday sprint with zero capacity for all teams (BE, FE, and Design).`;
             } else {
                 subtitleEl.textContent = 'Plan calculated without a New Year holiday sprint in view.';
             }
@@ -479,16 +479,16 @@
                 be_cap = (s) => (s === newYearSprint ? 0 : (configMap[s] ? configMap[s].beCapacity : BE_CAP_INPUT));
                 fe_cap = (s) => (s === newYearSprint ? 0 : (configMap[s] ? configMap[s].feCapacity : FE_CAP_INPUT));
                 des_cap = (s) => (s === newYearSprint ? 0 : (configMap[s] ? configMap[s].desCapacity : DES_CAP_INPUT));
-                be_wip = (s) => (configMap[s] ? configMap[s].beWip : 3);
-                fe_wip = (s) => (configMap[s] ? configMap[s].feWip : 3);
-                des_wip = (s) => (configMap[s] ? configMap[s].desWip : 2);
+                be_wip = (s) => (s === newYearSprint ? 0 : (configMap[s] ? configMap[s].beWip : BE_WIP_INPUT));
+                fe_wip = (s) => (s === newYearSprint ? 0 : (configMap[s] ? configMap[s].feWip : FE_WIP_INPUT));
+                des_wip = (s) => (s === newYearSprint ? 0 : (configMap[s] ? configMap[s].desWip : DES_WIP_INPUT));
             } else {
                 be_cap = (s) => (s === newYearSprint ? 0 : BE_CAP_INPUT);
                 fe_cap = (s) => (s === newYearSprint ? 0 : FE_CAP_INPUT);
                 des_cap = (s) => (s === newYearSprint ? 0 : DES_CAP_INPUT);
-                be_wip = () => BE_WIP_INPUT;
-                fe_wip = () => FE_WIP_INPUT;
-                des_wip = () => DES_WIP_INPUT;
+                be_wip = (s) => (s === newYearSprint ? 0 : BE_WIP_INPUT);
+                fe_wip = (s) => (s === newYearSprint ? 0 : FE_WIP_INPUT);
+                des_wip = (s) => (s === newYearSprint ? 0 : DES_WIP_INPUT);
             }
             const sortedTasks = tasksData.slice().sort((a, b) => a.order - b.order);
             
@@ -537,13 +537,19 @@
             let desGanttData = [];
 
             df_full.forEach((row, i) => {
-                // DES data
-                if (row.des_start !== null && row.des_end !== null) {
-                    desGanttData.push({
-                        x: [row.des_start, row.des_end],
-                        y: row.title
-                    });
-                }
+                // DES data - now uses sprint allocation like BE/FE
+                const des_alloc = row.des_sprint_allocation || {};
+                Object.keys(des_alloc).forEach(sprint => {
+                    const sprintNum = Number(sprint);
+                    if (des_alloc[sprintNum] > 0) {
+                        desGanttData.push({
+                            x: [sprintNum, sprintNum + 1],
+                            y: row.title,
+                            sprintStart: sprintNum,
+                            sprintEnd: sprintNum + 1
+                        });
+                    }
+                });
 
                 const be_alloc = row.be_sprint_allocation || {};
                 const fe_alloc = row.fe_sprint_allocation || {};
@@ -681,7 +687,7 @@
 
             let allSprints = new Set();
             ganttData.forEach(d => { allSprints.add(d.sprintStart); allSprints.add(d.sprintEnd); });
-            desGanttData.forEach(d => { allSprints.add(d.x[0]); allSprints.add(d.x[1]); });
+            desGanttData.forEach(d => { allSprints.add(d.sprintStart); allSprints.add(d.sprintEnd); });
 
             const sprintList = Array.from(allSprints).sort((a, b) => a - b);
             const sprintLabels = sprintList.map(s => dateFns.format(sprintDate(s), 'd MMM'));
@@ -695,9 +701,9 @@
             }));
             
             const desBarData = desGanttData.map(d => ({
-                 x: [sprintMap[d.x[0]], sprintMap[d.x[1]]],
+                 x: [sprintMap[d.sprintStart], sprintMap[d.sprintEnd]],
                  y: d.y, type: 'Design',
-                 sprintStart: d.x[0], sprintEnd: d.x[1]
+                 sprintStart: d.sprintStart, sprintEnd: d.sprintEnd
             }));
 
             chartInstance = new Chart(ctx, {
