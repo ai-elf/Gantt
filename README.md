@@ -69,4 +69,4 @@ Order,Title,FE,BE,DES
 - [PapaParse](https://www.papaparse.com/) (CDN)
 
 ## Credits
-Developed with ❤️. For questions or improvements, open an issue or PR! 
+For questions or improvements, open an issue or PR ;)
